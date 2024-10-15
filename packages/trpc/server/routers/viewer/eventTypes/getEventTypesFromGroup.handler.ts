@@ -150,7 +150,7 @@ const filterEventTypes = (
   eventTypes: MappedEventType[],
   userId: number,
   shouldListUserEvents: boolean | undefined,
-  teamId: string | null
+  teamId: number | null | undefined
 ) => {
   let filteredEventTypes = eventTypes.filter((eventType) => {
     const isAChildEvent = eventType.parentId;
