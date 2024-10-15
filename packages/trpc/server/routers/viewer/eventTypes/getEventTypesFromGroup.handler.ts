@@ -1,5 +1,7 @@
 import { hasFilter } from "@calcom/features/filters/lib/hasFilter";
 import { checkRateLimitAndThrowError } from "@calcom/lib/checkRateLimitAndThrowError";
+import logger from "@calcom/lib/logger";
+import { safeStringify } from "@calcom/lib/safeStringify";
 import { EventTypeRepository } from "@calcom/lib/server/repository/eventType";
 import type { PrismaClient } from "@calcom/prisma";
 import { SchedulingType } from "@calcom/prisma/enums";
@@ -15,6 +17,8 @@ type GetByViewerOptions = {
   };
   input: TGetEventTypesFromGroupSchema;
 };
+
+const log = logger.getSubLogger({ prefix: ["getEventTypesFromGroup"] });
 
 type EventType = Awaited<ReturnType<typeof EventTypeRepository.findAllByUpId>>[number];
 type MappedEventType = Awaited<ReturnType<typeof mapEventType>>;
@@ -63,7 +67,7 @@ export const getEventTypesFromGroup = async ({ ctx, input }: GetByViewerOptions)
 
   return {
     eventTypes,
-    nextCursor: nextCursor ?? null,
+    nextCursor: nextCursor ?? undefined,
   };
 };
 
@@ -143,7 +147,14 @@ const fetchEventTypesBatch = async (
 
   const mappedEventTypes = await Promise.all(eventTypes.map(mapEventType));
 
-  return { eventTypes: mappedEventTypes, nextCursor: nextCursor ?? null };
+  log.debug(
+    "fetchEventTypesBatch",
+    safeStringify({
+      mappedEventTypes,
+    })
+  );
+
+  return { eventTypes: mappedEventTypes, nextCursor: nextCursor ?? undefined };
 };
 
 const filterEventTypes = (
@@ -170,6 +181,13 @@ const filterEventTypes = (
       (evType) => evType.schedulingType !== SchedulingType.MANAGED
     );
   }
+
+  log.debug(
+    "filteredEventTypes",
+    safeStringify({
+      filteredEventTypes,
+    })
+  );
 
   return filteredEventTypes;
 };
